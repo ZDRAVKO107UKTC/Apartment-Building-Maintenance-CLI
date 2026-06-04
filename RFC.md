@@ -53,7 +53,7 @@ maintenance issue delete --id 1
 | CLI Framework  | Cobra                         |
 | Database       | SQLite                        |
 | ORM / DB Layer | GORM                          |
-| Migrations     | Raw SQL migration scripts     |
+| Migrations     | GORM AutoMigrate              |
 | Config         | Godotenv (.env files)         |
 | Email          | SendGrid API                  |
 | Testing        | Go testing package + testify  |
@@ -85,9 +85,8 @@ issue_service.go       → business logic (Business Logic Layer)
 email_service.go       → SendGrid integration (Business Logic Layer)
 /model
 issue.go               → Issue struct and types
-/db
-migrations/
-001_create_issues.sql  → schema migration
+/database
+database.go            → GORM connection and AutoMigrate
 .env.example               → committed config template
 Dockerfile
 docker-compose.yml
