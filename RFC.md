@@ -23,7 +23,7 @@ All commands follow the pattern: `maintenance <resource> <action> [flags]`
 
 ```bash
 # Create a new maintenance issue
-maintenance issue create --unit 4B --description "Broken boiler" --priority high
+maintenance issue create --title "Broken boiler" --unit 4B --description "No heat on 4th floor" --priority high
 
 # List all active issues
 maintenance issue list
@@ -41,7 +41,7 @@ maintenance issue resolve --id 1
 maintenance issue delete --id 1
 ```
 
-**Issue States:** `open` → `in-progress` → `resolved`
+**Issue States:** `open` → `in-progress` → `resolved` → `closed`
 
 ---
 
@@ -97,7 +97,7 @@ docker-compose.yml
 
 In scope:
 - Full CRUD for maintenance issues
-- Issue status workflow (open → in-progress → resolved)
+- Issue status workflow (open → in-progress → resolved → closed)
 - Email notification on create and resolve via SendGrid
 - Dockerised local environment
 - GitHub Actions CI (lint, test, build)

@@ -9,11 +9,12 @@ import (
 
 var validPriorities = map[string]bool{"low": true, "medium": true, "high": true}
 
-func CreateIssue(unit, description, priority string) (*model.Issue, error) {
+func CreateIssue(title, unit, description, priority string) (*model.Issue, error) {
 	if !validPriorities[priority] {
 		return nil, errors.New("priority must be low, medium, or high")
 	}
 	issue := &model.Issue{
+		Title:       title,
 		Unit:        unit,
 		Description: description,
 		Priority:    priority,
@@ -36,9 +37,9 @@ func ViewIssue(id uint) (*model.Issue, error) {
 func UpdateIssue(id uint, status string) (*model.Issue, error) {
 	s := model.Status(status)
 	switch s {
-	case model.StatusOpen, model.StatusInProgress, model.StatusResolved:
+	case model.StatusOpen, model.StatusInProgress, model.StatusResolved, model.StatusClosed:
 	default:
-		return nil, errors.New("status must be open, in-progress, or resolved")
+		return nil, errors.New("status must be open, in-progress, resolved, or closed")
 	}
 	issue, err := repository.FindIssueByID(id)
 	if err != nil {
