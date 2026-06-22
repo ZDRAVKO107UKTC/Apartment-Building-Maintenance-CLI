@@ -22,15 +22,16 @@ var issueCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a new maintenance issue",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		title, _ := cmd.Flags().GetString("title")
 		unit, _ := cmd.Flags().GetString("unit")
 		description, _ := cmd.Flags().GetString("description")
 		priority, _ := cmd.Flags().GetString("priority")
 
-		issue, err := service.CreateIssue(unit, description, priority)
+		issue, err := service.CreateIssue(title, unit, description, priority)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Issue #%d created (unit: %s, priority: %s)\n", issue.ID, issue.Unit, issue.Priority)
+		fmt.Printf("Issue #%d created (title: %s, unit: %s, priority: %s)\n", issue.ID, issue.Title, issue.Unit, issue.Priority)
 		return nil
 	},
 }
@@ -48,10 +49,10 @@ var issueListCmd = &cobra.Command{
 			return nil
 		}
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "ID\tUNIT\tDESCRIPTION\tPRIORITY\tSTATUS\tCREATED AT")
+		fmt.Fprintln(w, "ID\tTITLE\tUNIT\tDESCRIPTION\tPRIORITY\tSTATUS\tCREATED AT")
 		for _, issue := range issues {
-			fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\n",
-				issue.ID, issue.Unit, issue.Description, issue.Priority, issue.Status,
+			fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%s\t%s\n",
+				issue.ID, issue.Title, issue.Unit, issue.Description, issue.Priority, issue.Status,
 				issue.CreatedAt.Format("2006-01-02 15:04"),
 			)
 		}
@@ -71,6 +72,7 @@ var issueViewCmd = &cobra.Command{
 			return fmt.Errorf("issue #%d not found", id)
 		}
 		fmt.Printf("ID:          %d\n", issue.ID)
+		fmt.Printf("Title:       %s\n", issue.Title)
 		fmt.Printf("Unit:        %s\n", issue.Unit)
 		fmt.Printf("Description: %s\n", issue.Description)
 		fmt.Printf("Priority:    %s\n", issue.Priority)
@@ -127,9 +129,11 @@ var issueDeleteCmd = &cobra.Command{
 }
 
 func init() {
+	issueCreateCmd.Flags().String("title", "", "Short title for the issue")
 	issueCreateCmd.Flags().String("unit", "", "Unit identifier (e.g. 4B)")
 	issueCreateCmd.Flags().String("description", "", "Description of the issue")
 	issueCreateCmd.Flags().String("priority", "", "Priority: low, medium, high")
+	_ = issueCreateCmd.MarkFlagRequired("title")
 	_ = issueCreateCmd.MarkFlagRequired("unit")
 	_ = issueCreateCmd.MarkFlagRequired("description")
 	_ = issueCreateCmd.MarkFlagRequired("priority")
@@ -138,7 +142,7 @@ func init() {
 	_ = issueViewCmd.MarkFlagRequired("id")
 
 	issueUpdateCmd.Flags().Uint("id", 0, "Issue ID")
-	issueUpdateCmd.Flags().String("status", "", "New status: open, in-progress, resolved")
+	issueUpdateCmd.Flags().String("status", "", "New status: open, in-progress, resolved, closed")
 	_ = issueUpdateCmd.MarkFlagRequired("id")
 	_ = issueUpdateCmd.MarkFlagRequired("status")
 
