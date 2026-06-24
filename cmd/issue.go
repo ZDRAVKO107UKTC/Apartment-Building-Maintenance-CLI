@@ -69,7 +69,7 @@ var issueViewCmd = &cobra.Command{
 
 		issue, err := service.ViewIssue(id)
 		if err != nil {
-			return fmt.Errorf("issue #%d not found", id)
+			return err
 		}
 		fmt.Printf("ID:          %d\n", issue.ID)
 		fmt.Printf("Title:       %s\n", issue.Title)

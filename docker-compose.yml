@@ -1,0 +1,26 @@
+services:
+  app:
+    build: .
+    # All configuration (DB path, API keys) is injected from .env — nothing is
+    # hardcoded into the image.
+    env_file:
+      - .env
+    # SQLite is an embedded, file-based database. The data file lives on a named
+    # volume so it persists across container restarts and rebuilds.
+    volumes:
+      - db_data:/data
+    # This is a CLI, not a long-running server. Keep the container alive so
+    # commands can be run against it, e.g.:
+    #   docker compose exec app maintenance issue create --title ...
+    # The schema is created/updated automatically (GORM AutoMigrate) on the
+    # first command invocation.
+    entrypoint: ["tail", "-f", "/dev/null"]
+    networks:
+      - maintenance_net
+
+volumes:
+  db_data:
+
+networks:
+  maintenance_net:
+    driver: bridge
