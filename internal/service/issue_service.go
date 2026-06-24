@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/repository"
@@ -9,7 +10,16 @@ import (
 
 var validPriorities = map[string]bool{"low": true, "medium": true, "high": true}
 
-func CreateIssue(title, unit, description, priority string) (*model.Issue, error) {
+func CreateIssue(unit, description, priority string) (*model.Issue, error) {
+	unit = strings.TrimSpace(unit)
+	description = strings.TrimSpace(description)
+
+	if unit == "" {
+		return nil, errors.New("unit must not be empty")
+	}
+	if description == "" {
+		return nil, errors.New("description must not be empty")
+	}
 	if !validPriorities[priority] {
 		return nil, errors.New("priority must be low, medium, or high")
 	}
