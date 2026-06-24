@@ -24,6 +24,7 @@ func CreateIssue(unit, description, priority string) (*model.Issue, error) {
 		return nil, errors.New("priority must be low, medium, or high")
 	}
 	issue := &model.Issue{
+		Title:       title,
 		Unit:        unit,
 		Description: description,
 		Priority:    priority,
@@ -46,9 +47,9 @@ func ViewIssue(id uint) (*model.Issue, error) {
 func UpdateIssue(id uint, status string) (*model.Issue, error) {
 	s := model.Status(status)
 	switch s {
-	case model.StatusOpen, model.StatusInProgress, model.StatusResolved:
+	case model.StatusOpen, model.StatusInProgress, model.StatusResolved, model.StatusClosed:
 	default:
-		return nil, errors.New("status must be open, in-progress, or resolved")
+		return nil, errors.New("status must be open, in-progress, resolved, or closed")
 	}
 	issue, err := repository.FindIssueByID(id)
 	if err != nil {
