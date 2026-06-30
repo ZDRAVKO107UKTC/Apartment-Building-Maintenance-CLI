@@ -2,7 +2,10 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"strings"
+
+	"gorm.io/gorm"
 
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/repository"
@@ -10,10 +13,14 @@ import (
 
 var validPriorities = map[string]bool{"low": true, "medium": true, "high": true}
 
-func CreateIssue(unit, description, priority string) (*model.Issue, error) {
+func CreateIssue(title, unit, description, priority string) (*model.Issue, error) {
+	title = strings.TrimSpace(title)
 	unit = strings.TrimSpace(unit)
 	description = strings.TrimSpace(description)
 
+	if title == "" {
+		return nil, errors.New("title must not be empty")
+	}
 	if unit == "" {
 		return nil, errors.New("unit must not be empty")
 	}
@@ -33,6 +40,7 @@ func CreateIssue(unit, description, priority string) (*model.Issue, error) {
 	if err := repository.CreateIssue(issue); err != nil {
 		return nil, err
 	}
+	NotifyIssueCreated(issue)
 	return issue, nil
 }
 
@@ -41,11 +49,24 @@ func ListIssues() ([]model.Issue, error) {
 }
 
 func ViewIssue(id uint) (*model.Issue, error) {
-	return repository.FindIssueByID(id)
+	if id == 0 {
+		return nil, errors.New("id must be a positive integer")
+	}
+	issue, err := repository.FindIssueByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("issue #%d not found", id)
+		}
+		return nil, err
+	}
+	return issue, nil
 }
 
 func UpdateIssue(id uint, status string) (*model.Issue, error) {
-	s := model.Status(status)
+	if id == 0 {
+		return nil, errors.New("id must be a positive integer")
+	}
+	s := model.Status(strings.ToLower(strings.TrimSpace(status)))
 	switch s {
 	case model.StatusOpen, model.StatusInProgress, model.StatusResolved, model.StatusClosed:
 	default:
@@ -71,6 +92,7 @@ func ResolveIssue(id uint) (*model.Issue, error) {
 	if err := repository.UpdateIssue(issue); err != nil {
 		return nil, err
 	}
+	NotifyIssueResolved(issue)
 	return issue, nil
 }
 
