@@ -105,7 +105,13 @@ func ResolveIssue(id uint) (*model.Issue, error) {
 }
 
 func DeleteIssue(id uint) error {
+	if id == 0 {
+		return errors.New("id must be a positive integer")
+	}
 	if _, err := repository.FindIssueByID(id); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("issue #%d not found", id)
+		}
 		return err
 	}
 	return repository.DeleteIssue(id)
