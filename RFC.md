@@ -51,6 +51,9 @@ email notifications) as their canonical counterparts.
 ```bash
 # Equivalent to: maintenance issue resolve --id 1
 maintenance resolve 1
+
+# Equivalent to: maintenance issue delete --id 1
+maintenance delete 1
 ```
 
 **Issue States:** `open` → `in-progress` → `resolved` → `closed`

@@ -1,0 +1,22 @@
+# golangci-lint configuration. Kept intentionally close to the defaults plus a
+# few high-signal linters so the pipeline stays green without bikeshedding.
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - gofmt      # formatting
+    - govet      # suspicious constructs
+    - errcheck   # unchecked errors
+    - staticcheck
+    - ineffassign
+    - unused
+    - misspell
+
+issues:
+  # Test files legitimately ignore some errors (e.g. response bodies), so relax
+  # errcheck there to avoid noise.
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck

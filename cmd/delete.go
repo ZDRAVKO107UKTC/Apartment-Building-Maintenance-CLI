@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var resolveCmd = &cobra.Command{
-	Use:   "resolve <id>",
-	Short: "Mark a maintenance issue as resolved (shortcut)",
+var deleteCmd = &cobra.Command{
+	Use:   "delete <id>",
+	Short: "Delete a maintenance issue (shortcut)",
 	Args:  cobra.ExactArgs(1),
 	PreRun: func(cmd *cobra.Command, args []string) {
 		database.Init()
@@ -21,15 +21,14 @@ var resolveCmd = &cobra.Command{
 			return fmt.Errorf("invalid issue ID %q: must be a positive integer", args[0])
 		}
 
-		issue, err := newIssueService().ResolveIssue(uint(id))
-		if err != nil {
+		if err := newIssueService().DeleteIssue(uint(id)); err != nil {
 			return err
 		}
-		fmt.Printf("Issue #%d resolved.\n", issue.ID)
+		fmt.Printf("Issue #%d deleted.\n", id)
 		return nil
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(resolveCmd)
+	rootCmd.AddCommand(deleteCmd)
 }

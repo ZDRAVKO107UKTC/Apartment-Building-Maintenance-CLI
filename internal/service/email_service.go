@@ -13,58 +13,61 @@ import (
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 )
 
-// sendGridEndpoint is the SendGrid v3 transactional mail API.
 const sendGridEndpoint = "https://api.sendgrid.com/v3/mail/send"
 
-// emailClient is the resilient HTTP client used for all outbound notifications.
-// The timeout guarantees a slow or unresponsive SendGrid never blocks the CLI.
-var emailClient = &http.Client{Timeout: 10 * time.Second}
+type SendGridNotifier struct {
+	client   *http.Client
+	endpoint string
+	apiKey   string
+	from     string
+	to       string
+}
 
-// NotifyIssueCreated sends a notification that a new issue was registered.
-// Failures are logged but never returned, so notification problems can never
-// crash the application or roll back a successful database write.
-func NotifyIssueCreated(issue *model.Issue) {
+func NewSendGridNotifier() *SendGridNotifier {
+	return &SendGridNotifier{
+		client:   &http.Client{Timeout: 10 * time.Second},
+		endpoint: sendGridEndpoint,
+		apiKey:   os.Getenv("SENDGRID_API_KEY"),
+		from:     os.Getenv("EMAIL_FROM"),
+		to:       os.Getenv("MANAGER_EMAIL"),
+	}
+}
+
+func (n *SendGridNotifier) IssueCreated(issue *model.Issue) {
 	subject := fmt.Sprintf("New maintenance issue #%d: %s", issue.ID, issue.Title)
 	body := fmt.Sprintf(
 		"A new maintenance issue has been registered.\n\n"+
 			"ID:          %d\nTitle:       %s\nUnit:        %s\nPriority:    %s\nStatus:      %s\nDescription: %s\n",
 		issue.ID, issue.Title, issue.Unit, issue.Priority, issue.Status, issue.Description,
 	)
-	sendEmail(subject, body)
+	if err := n.send(subject, body); err != nil {
+		log.Printf("email notification failed: %v", err)
+	}
 }
 
-// NotifyIssueResolved sends a notification that an issue has been resolved.
-// As with NotifyIssueCreated, failures are logged and swallowed.
-func NotifyIssueResolved(issue *model.Issue) {
+func (n *SendGridNotifier) IssueResolved(issue *model.Issue) {
 	subject := fmt.Sprintf("Maintenance issue #%d resolved: %s", issue.ID, issue.Title)
 	body := fmt.Sprintf(
 		"The following maintenance issue has been marked resolved.\n\n"+
 			"ID:    %d\nTitle: %s\nUnit:  %s\n",
 		issue.ID, issue.Title, issue.Unit,
 	)
-	sendEmail(subject, body)
+	if err := n.send(subject, body); err != nil {
+		log.Printf("email notification failed: %v", err)
+	}
 }
 
-// sendEmail posts a transactional message to SendGrid. It is deliberately
-// best-effort: every failure path logs to stderr and returns without panicking
-// or propagating an error to the caller.
-func sendEmail(subject, body string) {
-	apiKey := os.Getenv("SENDGRID_API_KEY")
-	from := os.Getenv("EMAIL_FROM")
-	to := os.Getenv("MANAGER_EMAIL")
-
-	// In local/dev environments the integration is optional. Skip quietly with
-	// a notice rather than treating a missing key as an error.
-	if apiKey == "" || from == "" || to == "" {
+func (n *SendGridNotifier) send(subject, body string) error {
+	if n.apiKey == "" || n.from == "" || n.to == "" {
 		log.Println("email notification skipped: SENDGRID_API_KEY, EMAIL_FROM or MANAGER_EMAIL not configured")
-		return
+		return nil
 	}
 
 	payload := map[string]any{
 		"personalizations": []map[string]any{
-			{"to": []map[string]string{{"email": to}}},
+			{"to": []map[string]string{{"email": n.to}}},
 		},
-		"from":    map[string]string{"email": from},
+		"from":    map[string]string{"email": n.from},
 		"subject": subject,
 		"content": []map[string]string{
 			{"type": "text/plain", "value": body},
@@ -73,31 +76,27 @@ func sendEmail(subject, body string) {
 
 	data, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("email notification failed: could not encode payload: %v", err)
-		return
+		return fmt.Errorf("could not encode payload: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), emailClient.Timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), n.client.Timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, sendGridEndpoint, bytes.NewReader(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, n.endpoint, bytes.NewReader(data))
 	if err != nil {
-		log.Printf("email notification failed: could not build request: %v", err)
-		return
+		return fmt.Errorf("could not build request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer "+n.apiKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := emailClient.Do(req)
+	resp, err := n.client.Do(req)
 	if err != nil {
-		// Covers timeouts, DNS errors, connection refused, etc.
-		log.Printf("email notification failed: request error: %v", err)
-		return
+		return fmt.Errorf("request error: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		log.Printf("email notification failed: SendGrid returned status %d", resp.StatusCode)
-		return
+		return fmt.Errorf("SendGrid returned status %d", resp.StatusCode)
 	}
+	return nil
 }

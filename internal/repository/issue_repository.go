@@ -1,32 +1,46 @@
 package repository
 
 import (
-	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/database"
+	"errors"
+
+	"gorm.io/gorm"
+
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 )
 
-func CreateIssue(issue *model.Issue) error {
-	return database.DB.Create(issue).Error
+type GormIssueRepository struct {
+	db *gorm.DB
 }
 
-func FindAllIssues() ([]model.Issue, error) {
+func NewGormIssueRepository(db *gorm.DB) *GormIssueRepository {
+	return &GormIssueRepository{db: db}
+}
+
+func (r *GormIssueRepository) Create(issue *model.Issue) error {
+	return r.db.Create(issue).Error
+}
+
+func (r *GormIssueRepository) FindAll() ([]model.Issue, error) {
 	var issues []model.Issue
-	err := database.DB.Find(&issues).Error
+	err := r.db.Find(&issues).Error
 	return issues, err
 }
 
-func FindIssueByID(id uint) (*model.Issue, error) {
+func (r *GormIssueRepository) FindByID(id uint) (*model.Issue, error) {
 	var issue model.Issue
-	if err := database.DB.First(&issue, id).Error; err != nil {
+	if err := r.db.First(&issue, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, model.ErrIssueNotFound
+		}
 		return nil, err
 	}
 	return &issue, nil
 }
 
-func UpdateIssue(issue *model.Issue) error {
-	return database.DB.Save(issue).Error
+func (r *GormIssueRepository) Update(issue *model.Issue) error {
+	return r.db.Save(issue).Error
 }
 
-func DeleteIssue(id uint) error {
-	return database.DB.Delete(&model.Issue{}, id).Error
+func (r *GormIssueRepository) Delete(id uint) error {
+	return r.db.Delete(&model.Issue{}, id).Error
 }
