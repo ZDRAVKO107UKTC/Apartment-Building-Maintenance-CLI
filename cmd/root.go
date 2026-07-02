@@ -12,17 +12,13 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "maintenance",
-	Short: "Apartment Building Maintenance CLI",
-	Long:  "A CLI tool for managing apartment building maintenance issues.",
-	// Runtime errors are reported once by Execute (below); silence Cobra's own
-	// error/usage dump so failures print a single meaningful line to stderr.
+	Use:           "maintenance",
+	Short:         "Apartment Building Maintenance CLI",
+	Long:          "A CLI tool for managing apartment building maintenance issues.",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
 
-// newIssueService assembles the service with its real dependencies. It must be
-// called after database.Init() has populated database.DB.
 func newIssueService() *service.IssueService {
 	return service.NewIssueService(
 		repository.NewGormIssueRepository(database.DB),

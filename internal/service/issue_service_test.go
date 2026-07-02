@@ -8,13 +8,10 @@ import (
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 )
 
-// mockRepository is an in-memory stand-in for the data layer. It lets the
-// business-logic tests run without a real database or any network call, and can
-// be told to return an error to exercise failure paths.
 type mockRepository struct {
 	issues   map[uint]*model.Issue
 	nextID   uint
-	failNext error // if set, the next mutating call returns this error
+	failNext error
 }
 
 func newMockRepository() *mockRepository {
@@ -29,7 +26,6 @@ func (m *mockRepository) Create(issue *model.Issue) error {
 	}
 	issue.ID = m.nextID
 	m.nextID++
-	// Store a copy so callers can't mutate our state through the pointer.
 	stored := *issue
 	m.issues[issue.ID] = &stored
 	return nil
@@ -68,8 +64,6 @@ func (m *mockRepository) Delete(id uint) error {
 	return nil
 }
 
-// spyNotifier records which notifications the service triggered, so tests can
-// assert that email is sent on the right events without touching SendGrid.
 type spyNotifier struct {
 	created  int
 	resolved int
@@ -78,8 +72,6 @@ type spyNotifier struct {
 func (s *spyNotifier) IssueCreated(*model.Issue)  { s.created++ }
 func (s *spyNotifier) IssueResolved(*model.Issue) { s.resolved++ }
 
-// newTestService wires the service to mocks and returns all three so tests can
-// make assertions against the collaborators.
 func newTestService() (*IssueService, *mockRepository, *spyNotifier) {
 	repo := newMockRepository()
 	notifier := &spyNotifier{}
@@ -206,7 +198,7 @@ func TestUpdateIssue_StatusValidation(t *testing.T) {
 
 	t.Run("re-applying current status rejected", func(t *testing.T) {
 		svc, _, _ := newTestService()
-		issue := mustCreate(t, svc) // starts open
+		issue := mustCreate(t, svc)
 		_, err := svc.UpdateIssue(issue.ID, "open")
 		if err == nil {
 			t.Fatal("expected error when setting status to its current value")

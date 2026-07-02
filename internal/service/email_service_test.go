@@ -11,8 +11,6 @@ import (
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 )
 
-// newTestNotifier builds a notifier aimed at a stub server instead of the real
-// SendGrid endpoint, so no test ever makes a real network call.
 func newTestNotifier(endpoint string) *SendGridNotifier {
 	return &SendGridNotifier{
 		client:   &http.Client{Timeout: 2 * time.Second},
@@ -29,7 +27,7 @@ func TestSend_Success(t *testing.T) {
 		gotAuth = r.Header.Get("Authorization")
 		b, _ := io.ReadAll(r.Body)
 		gotBody = string(b)
-		w.WriteHeader(http.StatusAccepted) // 202, SendGrid's success code
+		w.WriteHeader(http.StatusAccepted)
 	}))
 	defer srv.Close()
 
@@ -47,7 +45,7 @@ func TestSend_Success(t *testing.T) {
 
 func TestSend_ErrorStatus(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized) // 401 — bad API key
+		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	defer srv.Close()
 
@@ -62,8 +60,6 @@ func TestSend_ErrorStatus(t *testing.T) {
 }
 
 func TestSend_MissingConfigSkips(t *testing.T) {
-	// A notifier with no API key must not error or make a request; it is a
-	// deliberate no-op so the app runs without SendGrid configured.
 	called := false
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
@@ -73,7 +69,6 @@ func TestSend_MissingConfigSkips(t *testing.T) {
 	n := &SendGridNotifier{
 		client:   &http.Client{Timeout: 2 * time.Second},
 		endpoint: srv.URL,
-		// apiKey/from/to intentionally empty
 	}
 	if err := n.send("subject", "body"); err != nil {
 		t.Fatalf("missing config should skip without error, got: %v", err)
@@ -84,12 +79,9 @@ func TestSend_MissingConfigSkips(t *testing.T) {
 }
 
 func TestIssueResolved_DoesNotPanicOnFailure(t *testing.T) {
-	// The public notifier method must swallow (log) transport errors rather
-	// than propagate or panic. Point it at a closed server to force a failure.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
-	srv.Close() // immediately closed -> connection refused
+	srv.Close()
 
 	n := newTestNotifier(srv.URL)
-	// Should return normally despite the underlying request error.
 	n.IssueResolved(&model.Issue{ID: 1, Title: "x", Unit: "4B"})
 }

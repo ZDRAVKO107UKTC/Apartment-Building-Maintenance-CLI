@@ -8,9 +8,6 @@ import (
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 )
 
-// Repository is the data-layer abstraction the service depends on. Any type
-// satisfying it (the real GORM repository, or a test mock) can back the service,
-// which keeps the business logic free of persistence details.
 type Repository interface {
 	Create(issue *model.Issue) error
 	FindAll() ([]model.Issue, error)
@@ -19,22 +16,16 @@ type Repository interface {
 	Delete(id uint) error
 }
 
-// Notifier abstracts outbound notifications (e.g. SendGrid email) so the
-// service never talks to a 3rd-party API directly and can be tested with a stub.
 type Notifier interface {
 	IssueCreated(issue *model.Issue)
 	IssueResolved(issue *model.Issue)
 }
 
-// IssueService holds the business logic for maintenance issues. Its
-// dependencies are injected, so tests can supply mocks instead of a real
-// database or email API.
 type IssueService struct {
 	repo     Repository
 	notifier Notifier
 }
 
-// NewIssueService constructs a service from its injected dependencies.
 func NewIssueService(repo Repository, notifier Notifier) *IssueService {
 	return &IssueService{repo: repo, notifier: notifier}
 }

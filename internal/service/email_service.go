@@ -13,12 +13,8 @@ import (
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 )
 
-// sendGridEndpoint is the SendGrid v3 transactional mail API.
 const sendGridEndpoint = "https://api.sendgrid.com/v3/mail/send"
 
-// SendGridNotifier sends notifications via the SendGrid API. All collaborators
-// (HTTP client, endpoint, credentials) are fields so tests can point it at an
-// httptest server and never touch the real network. It implements Notifier.
 type SendGridNotifier struct {
 	client   *http.Client
 	endpoint string
@@ -27,9 +23,6 @@ type SendGridNotifier struct {
 	to       string
 }
 
-// NewSendGridNotifier builds a notifier from environment variables. A missing
-// key is not an error: send() will skip quietly so local/dev runs work without
-// SendGrid credentials.
 func NewSendGridNotifier() *SendGridNotifier {
 	return &SendGridNotifier{
 		client:   &http.Client{Timeout: 10 * time.Second},
@@ -40,9 +33,6 @@ func NewSendGridNotifier() *SendGridNotifier {
 	}
 }
 
-// IssueCreated notifies that a new issue was registered. Failures are logged
-// (never silent) but not propagated, so a notification problem can't roll back
-// a successful database write.
 func (n *SendGridNotifier) IssueCreated(issue *model.Issue) {
 	subject := fmt.Sprintf("New maintenance issue #%d: %s", issue.ID, issue.Title)
 	body := fmt.Sprintf(
@@ -55,8 +45,6 @@ func (n *SendGridNotifier) IssueCreated(issue *model.Issue) {
 	}
 }
 
-// IssueResolved notifies that an issue was resolved. As with IssueCreated,
-// failures are logged and swallowed.
 func (n *SendGridNotifier) IssueResolved(issue *model.Issue) {
 	subject := fmt.Sprintf("Maintenance issue #%d resolved: %s", issue.ID, issue.Title)
 	body := fmt.Sprintf(
@@ -69,12 +57,7 @@ func (n *SendGridNotifier) IssueResolved(issue *model.Issue) {
 	}
 }
 
-// send posts a transactional message to SendGrid. It returns an error on any
-// failure so callers can log meaningfully; a missing configuration is treated
-// as a deliberate no-op (returns nil) rather than an error.
 func (n *SendGridNotifier) send(subject, body string) error {
-	// In local/dev environments the integration is optional. Skip with a
-	// notice rather than treating a missing key as an error.
 	if n.apiKey == "" || n.from == "" || n.to == "" {
 		log.Println("email notification skipped: SENDGRID_API_KEY, EMAIL_FROM or MANAGER_EMAIL not configured")
 		return nil
@@ -108,7 +91,6 @@ func (n *SendGridNotifier) send(subject, body string) error {
 
 	resp, err := n.client.Do(req)
 	if err != nil {
-		// Covers timeouts, DNS errors, connection refused, etc.
 		return fmt.Errorf("request error: %w", err)
 	}
 	defer resp.Body.Close()

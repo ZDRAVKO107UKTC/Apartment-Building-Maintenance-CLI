@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// resolveCmd is a top-level shortcut for "issue resolve --id <id>", taking the
-// issue ID as a positional argument: `maintenance resolve 1`.
 var resolveCmd = &cobra.Command{
 	Use:   "resolve <id>",
 	Short: "Mark a maintenance issue as resolved (shortcut)",

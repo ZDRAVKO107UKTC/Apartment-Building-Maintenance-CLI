@@ -13,12 +13,8 @@ import (
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/model"
 )
 
-// DB is the process-wide GORM handle used by the repository layer.
 var DB *gorm.DB
 
-// Init connects to the configured SQLite database and keeps the schema in sync
-// via GORM AutoMigrate. The database location is injected via the DB_PATH
-// environment variable; nothing is hardcoded.
 func Init() {
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
