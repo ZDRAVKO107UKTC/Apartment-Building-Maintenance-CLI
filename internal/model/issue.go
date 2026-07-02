@@ -1,6 +1,14 @@
 package model
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+// ErrIssueNotFound is the domain-level "not found" error. The repository layer
+// translates storage-specific errors (e.g. gorm.ErrRecordNotFound) into this so
+// the service layer can react without importing any persistence package.
+var ErrIssueNotFound = errors.New("issue not found")
 
 type Status string
 

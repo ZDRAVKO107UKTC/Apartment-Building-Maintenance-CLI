@@ -6,7 +6,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/database"
-	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +26,7 @@ var issueCreateCmd = &cobra.Command{
 		description, _ := cmd.Flags().GetString("description")
 		priority, _ := cmd.Flags().GetString("priority")
 
-		issue, err := service.CreateIssue(title, unit, description, priority)
+		issue, err := newIssueService().CreateIssue(title, unit, description, priority)
 		if err != nil {
 			return err
 		}
@@ -40,7 +39,7 @@ var issueListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all maintenance issues",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		issues, err := service.ListIssues()
+		issues, err := newIssueService().ListIssues()
 		if err != nil {
 			return err
 		}
@@ -67,7 +66,7 @@ var issueViewCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, _ := cmd.Flags().GetUint("id")
 
-		issue, err := service.ViewIssue(id)
+		issue, err := newIssueService().ViewIssue(id)
 		if err != nil {
 			return err
 		}
@@ -90,7 +89,7 @@ var issueUpdateCmd = &cobra.Command{
 		id, _ := cmd.Flags().GetUint("id")
 		status, _ := cmd.Flags().GetString("status")
 
-		issue, err := service.UpdateIssue(id, status)
+		issue, err := newIssueService().UpdateIssue(id, status)
 		if err != nil {
 			return err
 		}
@@ -105,7 +104,7 @@ var issueResolveCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, _ := cmd.Flags().GetUint("id")
 
-		issue, err := service.ResolveIssue(id)
+		issue, err := newIssueService().ResolveIssue(id)
 		if err != nil {
 			return err
 		}
@@ -120,7 +119,7 @@ var issueDeleteCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, _ := cmd.Flags().GetUint("id")
 
-		if err := service.DeleteIssue(id); err != nil {
+		if err := newIssueService().DeleteIssue(id); err != nil {
 			return err
 		}
 		fmt.Printf("Issue #%d deleted.\n", id)

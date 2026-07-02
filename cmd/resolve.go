@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/database"
-	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +23,7 @@ var resolveCmd = &cobra.Command{
 			return fmt.Errorf("invalid issue ID %q: must be a positive integer", args[0])
 		}
 
-		issue, err := service.ResolveIssue(uint(id))
+		issue, err := newIssueService().ResolveIssue(uint(id))
 		if err != nil {
 			return err
 		}

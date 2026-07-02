@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/database"
-	"github.com/ZDRAVKO107UKTC/Apartment-Building-Maintenance-CLI/internal/service"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +21,7 @@ var deleteCmd = &cobra.Command{
 			return fmt.Errorf("invalid issue ID %q: must be a positive integer", args[0])
 		}
 
-		if err := service.DeleteIssue(uint(id)); err != nil {
+		if err := newIssueService().DeleteIssue(uint(id)); err != nil {
 			return err
 		}
 		fmt.Printf("Issue #%d deleted.\n", id)
