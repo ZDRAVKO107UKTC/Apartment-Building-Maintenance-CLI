@@ -74,7 +74,19 @@ func UpdateIssue(id uint, status string) (*model.Issue, error) {
 	}
 	issue, err := repository.FindIssueByID(id)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("issue #%d not found", id)
+		}
 		return nil, err
+	}
+	if issue.Status == s {
+		return nil, fmt.Errorf("issue #%d is already %s", id, s)
+	}
+	if !issue.Status.CanTransitionTo(s) {
+		if issue.Status == model.StatusClosed {
+			return nil, fmt.Errorf("issue #%d is closed and cannot change status", id)
+		}
+		return nil, fmt.Errorf("cannot change status from %s to %s", issue.Status, s)
 	}
 	issue.Status = s
 	if err := repository.UpdateIssue(issue); err != nil {
@@ -84,12 +96,8 @@ func UpdateIssue(id uint, status string) (*model.Issue, error) {
 }
 
 func ResolveIssue(id uint) (*model.Issue, error) {
-	issue, err := repository.FindIssueByID(id)
+	issue, err := UpdateIssue(id, string(model.StatusResolved))
 	if err != nil {
-		return nil, err
-	}
-	issue.Status = model.StatusResolved
-	if err := repository.UpdateIssue(issue); err != nil {
 		return nil, err
 	}
 	NotifyIssueResolved(issue)

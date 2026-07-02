@@ -41,7 +41,33 @@ maintenance issue resolve --id 1
 maintenance issue delete --id 1
 ```
 
+### Shortcuts
+
+For the most frequent actions, top-level shortcuts are provided that take the
+issue ID as a positional argument instead of the `issue <action> --id` form.
+They share the same underlying logic (including status-transition rules and
+email notifications) as their canonical counterparts.
+
+```bash
+# Equivalent to: maintenance issue resolve --id 1
+maintenance resolve 1
+```
+
 **Issue States:** `open` → `in-progress` → `resolved` → `closed`
+
+Status transitions are validated. The workflow is forward-oriented but
+pragmatic:
+
+| From          | Allowed targets                    |
+|---------------|------------------------------------|
+| `open`        | `in-progress`, `resolved`, `closed`|
+| `in-progress` | `open`, `resolved`, `closed`       |
+| `resolved`    | `in-progress` (reopen), `closed`   |
+| `closed`      | _(terminal — no transitions)_      |
+
+Forward skips (e.g. `open` → `resolved`) and reopening a `resolved` issue are
+permitted. Re-applying the current status is rejected, as is any change to a
+`closed` issue. Invalid transitions and unknown issue IDs return a clear error.
 
 ---
 
